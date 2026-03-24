@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamTV - Upload Direto</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* ===== PAINEL DE CONTROLE ===== */
+        .control-panel {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-right: 2px solid #334155;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .panel-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #cbd5e1;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            background: #1e293b;
+            color: #ffffff;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: #2563eb;
+        }
+
+        input[type="text"]:focus,
+        input[type="file"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+            width: 100%;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-container {
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* ===== FILA DE MÍDIA ===== */
+        .queue-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+        }
+
+        .queue-item {
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .queue-item:hover {
+            background: #334155;
+        }
+
+        .queue-item.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 3px solid #3b82f6;
+        }
+
+        .queue-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #e2e8f0;
+        }
+
+        .queue-item-type {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .queue-item-actions {
+            display: flex;
+            gap: 6px;
+            margin-left: 8px;
+        }
+
+        .queue-item-actions button {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .empty-queue {
+            padding: 24px;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        /* ===== DISPLAY AREA ===== */
+        .display-area {
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .display-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000000;
+        }
+
+        .display-content img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .display-content video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .display-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .display-placeholder {
+            text-align: center;
+            color: #64748b;
+        }
+
+        .display-placeholder h2 {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .display-placeholder p {
+            font-size: 16px;
+        }
+
+        .display-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .hud-info {
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .hud-info strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .hud-status {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .control-panel {
+                border-right: none;
+                border-bottom: 2px solid #334155;
+                max-height: 40vh;
+            }
+
+            .display-area {
+                min-height: 60vh;
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        .file-name {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- PAINEL DE CONTROLE -->
+        <div class="control-panel">
+            <div class="panel-header">
+                <h1>📺 StreamTV</h1>
+            </div>
+
+            <!-- ADICIONAR MÍDIA -->
+            <div class="section">
+                <span class="section-title">Fazer Upload de Mídia</span>
+
+                <div class="form-group">
+                    <label for="mediaName">Nome/Título</label>
+                    <input type="text" id="mediaName" placeholder="Ex: Apresentação Q1 2024">
+                </div>
+
+                <div class="form-group">
+                    <label for="mediaFile">Selecionar Arquivo</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="mediaFile" accept="image/*,video/*,.pdf" onchange="updateFileName()">
+                        <div class="file-name" id="fileName">Nenhum arquivo selecionado</div>
+                    </div>
+                </div>
+
+                <!-- PROGRESS BAR -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Enviando... 0%</div>
+                </div>
+
+                <button class="btn-primary" id="uploadBtn" onclick="uploadMedia()">⬆️ Fazer Upload</button>
+            </div>
+
+            <!-- FILA DE MÍDIA -->
+            <div class="section" style="flex: 1; display: flex; flex-direction: column;">
+                <span class="section-title">Fila de Mídia (<span id="queueCount">0</span>)</span>
+                <div class="queue-list" id="queueList">
+                    <div class="empty-queue">Nenhuma mídia na fila</div>
+                </div>
+            </div>
+
+            <!-- CONTROLES -->
+            <div class="section">
+                <button class="btn-secondary" onclick="clearQueue()" style="margin-bottom: 8px;">Limpar Fila</button>
+                <button class="btn-secondary" onclick="toggleFullscreen()">🖥️ Tela Cheia</button>
+            </div>
+        </div>
+
+        <!-- ÁREA DE EXIBIÇÃO -->
+        <div class="display-area" id="displayArea">
+            <div class="display-hud">
+                <div class="hud-info">
+                    <strong id="hudTitle">StreamTV</strong>
+                    <span id="hudPosition">Nenhuma mídia</span>
+                </div>
+                <div class="hud-status" id="hudStatus">Aguardando mídia...</div>
+            </div>
+            <div class="display-content" id="displayContent">
+                <div class="display-placeholder">
+                    <h2>📺</h2>
+                    <p>Nenhuma mídia para exibir</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== FIREBASE CONFIG =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMQSxDe4i_ktQJHAo7bBDi4Sp-xRRnNRg",
+            authDomain: "streamtv-4936a.firebaseapp.com",
+            projectId: "streamtv-4936a",
+            databaseURL: "https://streamtv-4936a-default-rtdb.firebaseio.com",
+            storageBucket: "streamtv-4936a.firebasestorage.app",
+            messagingSenderId: "849945523765",
+            appId: "1:849945523765:web:5bf5f1ef9a3d728939637c",
+            measurementId: "G-D082EGGZZX"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let queue = [];
+        let currentIndex = 0;
+        let isUploading = false;
+
+        // ===== ATUALIZAR NOME DO ARQUIVO =====
+        function updateFileName() {
+            const file = document.getElementById('mediaFile').files[0];
+            const fileName = document.getElementById('fileName');
+            if (file) {
+                const size = (file.size / 1024 / 1024).toFixed(2);
+                fileName.textContent = `✓ ${file.name} (${size} MB)`;
+            } else {
+                fileName.textContent = 'Nenhum arquivo selecionado';
+            }
+        }
+
+        // ===== FAZER UPLOAD =====
+        function uploadMedia() {
+            const name = document.getElementById('mediaName').value.trim();
+            const file = document.getElementById('mediaFile').files[0];
+
+            if (!name || !file) {
+                alert('Preencha o nome e selecione um arquivo');
+                return;
+            }
+
+            if (isUploading) {
+                alert('Já há um upload em andamento');
+                return;
+            }
+
+            // Validar tamanho (limite: 16MB para Firebase Realtime Database)
+            const maxSize = 16 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert(`Arquivo muito grande! Máximo: 16MB. Seu arquivo: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                return;
+            }
+
+            isUploading = true;
+            document.getElementById('uploadBtn').disabled = true;
+
+            // Ler arquivo como base64
+            const reader = new FileReader();
+
+            reader.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    updateProgress(percentComplete);
+                }
+            };
+
+            reader.onload = (event) => {
+                const base64 = event.target.result;
+                const mediaType = file.type.startsWith('video') ? 'video' : file.type === 'application/pdf' ? 'document' : 'image';
+
+                const media = {
+                    id: Date.now(),
+                    name,
+                    type: mediaType,
+                    data: base64,
+                    fileName: file.name,
+                    fileSize: file.size,
+                    createdAt: new Date().toLocaleTimeString('pt-BR')
+                };
+
+                updateProgress(95);
+
+                // Salvar no Firebase
+                db.ref(`streamtv/queue/${media.id}`).set(media, (error) => {
+                    if (error) {
+                        alert('❌ Erro ao fazer upload: ' + error.message);
+                        console.error(error);
+                    } else {
+                        alert('✅ Arquivo enviado com sucesso!');
+                        document.getElementById('mediaName').value = '';
+                        document.getElementById('mediaFile').value = '';
+                        document.getElementById('fileName').textContent = 'Nenhum arquivo selecionado';
+                    }
+
+                    updateProgress(100);
+                    setTimeout(() => {
+                        document.getElementById('progressContainer').classList.remove('active');
+                        isUploading = false;
+                        document.getElementById('uploadBtn').disabled = false;
+                    }, 500);
+                });
+            };
+
+            reader.onerror = () => {
+                alert('❌ Erro ao ler o arquivo');
+                isUploading = false;
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('progressContainer').classList.remove('active');
+            };
+
+            document.getElementById('progressContainer').classList.add('active');
+            reader.readAsDataURL(file);
+        }
+
+        // ===== ATUALIZAR PROGRESS BAR =====
+        function updateProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = `Enviando... ${Math.round(percent)}%`;
+        }
+
+        // ===== CARREGAR FILA DO FIREBASE =====
+        function loadQueue() {
+            db.ref('streamtv/queue').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    queue = Object.values(snapshot.val());
+                } else {
+                    queue = [];
+                }
+                renderQueue();
+                updateDisplay();
+            });
+        }
+
+        // ===== RENDERIZAR FILA =====
+        function renderQueue() {
+            const queueList = document.getElementById('queueList');
+            document.getElementById('queueCount').textContent = queue.length;
+
+            if (queue.length === 0) {
+                queueList.innerHTML = '<div class="empty-queue">Nenhuma mídia na fila</div>';
+                return;
+            }
+
+            queueList.innerHTML = queue.map((item, index) => `
+                <div class="queue-item ${index === currentIndex ? 'active' : ''}" onclick="selectMedia(${index})">
+                    <div class="queue-item-info">
+                        <div class="queue-item-name">${index + 1}. ${item.name}</div>
+                        <div class="queue-item-type">
+                            ${item.type === 'image' ? '🖼️ Imagem' : item.type === 'video' ? '🎬 Vídeo' : '📄 Documento'}
+                            • ${(item.fileSize / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                    </div>
+                    <div class="queue-item-actions">
+                        <button class="btn-secondary" onclick="event.stopPropagation(); deleteMedia(${index})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== SELECIONAR MÍDIA =====
+        function selectMedia(index) {
+            currentIndex = index;
+            renderQueue();
+            updateDisplay();
+        }
+
+        // ===== DELETAR MÍDIA =====
+        function deleteMedia(index) {
+            if (confirm('Deletar esta mídia?')) {
+                const item = queue[index];
+                db.ref(`streamtv/queue/${item.id}`).remove();
+                if (currentIndex === index) {
+                    currentIndex = 0;
+                }
+            }
+        }
+
+        // ===== LIMPAR FILA =====
+        function clearQueue() {
+            if (confirm('Tem certeza? Isso vai deletar TODA a fila!')) {
+                db.ref('streamtv/queue').remove();
+                currentIndex = 0;
+            }
+        }
+
+        // ===== ATUALIZAR DISPLAY =====
+        function updateDisplay() {
+            const displayContent = document.getElementById('displayContent');
+            const hudTitle = document.getElementById('hudTitle');
+            const hudPosition = document.getElementById('hudPosition');
+            const hudStatus = document.getElementById('hudStatus');
+
+            if (queue.length === 0) {
+                displayContent.innerHTML = `
+                    <div class="display-placeholder">
+                        <h2>📺</h2>
+                        <p>Nenhuma mídia para exibir</p>
+                    </div>
+                `;
+                hudTitle.textContent = 'StreamTV';
+                hudPosition.textContent = 'Nenhuma mídia';
+                hudStatus.textContent = 'Aguardando mídia...';
+                return;
+            }
+
+            const current = queue[currentIndex];
+            hudTitle.textContent = current.name;
+            hudPosition.textContent = `${currentIndex + 1} de ${queue.length}`;
+            hudStatus.textContent = current.type === 'image' ? '🖼️ Imagem' : current.type === 'video' ? '🎬 Vídeo' : '📄 Documento';
+
+            if (current.type === 'image') {
+                displayContent.innerHTML = `<img src="${current.data}" alt="${current.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23333%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%23666%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EErro ao carregar%3C/text%3E%3C/svg%3E'">`;
+            } else if (current.type === 'video') {
+                displayContent.innerHTML = `<video controls autoplay><source src="${current.data}" type="video/mp4">Seu navegador não suporta vídeo</video>`;
+            } else if (current.type === 'document') {
+                displayContent.innerHTML = `<iframe src="${current.data}"></iframe>`;
+            }
+        }
+
+        // ===== NAVEGAÇÃO POR TECLADO =====
+        document.addEventListener('keydown', (e) => {
+            if (queue.length === 0) return;
+
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % queue.length;
+                renderQueue();
+                updateDisplay();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                currentIndex = (currentIndex - 1 + queue.length) % queue.length;
+                renderQueue();
+                updateDisplay();
+            } else if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+
+        // ===== TELA CHEIA =====
+        function toggleFullscreen() {
+            const elem = document.getElementById('displayArea');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => {
+                    alert(`Erro ao ativar tela cheia: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ===== INICIALIZAR =====
+        loadQueue();
+    </script>
+</body>
+</html>
