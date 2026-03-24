@@ -9,54 +9,54 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #ffffff; }
         .container { display: grid; grid-template-columns: 1fr 2fr; height: 100vh; gap: 0; }
 
-        .control-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-right: 2px solid #334155; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; }
-        .panel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
-        .panel-header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .section { margin-bottom: 24px; }
-        .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 12px; display: block; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
-        input[type="text"], input[type="file"], input[type="password"], select { width: 100%; padding: 10px 12px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #ffffff; font-size: 13px; transition: all 0.2s; }
+        .control-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-right: 2px solid #334155; padding: 12px; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        .panel-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #334155; flex-shrink: 0; }
+        .panel-header h1 { font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .section { margin-bottom: 10px; flex-shrink: 0; }
+        .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 6px; display: block; }
+        .form-group { margin-bottom: 6px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #cbd5e1; }
+        input[type="text"], input[type="file"], input[type="password"], select { width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #ffffff; font-size: 12px; transition: all 0.2s; }
         input[type="file"] { cursor: pointer; }
-        input[type="file"]::file-selector-button { background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; margin-right: 8px; }
+        input[type="file"]::file-selector-button { background: #3b82f6; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-weight: 600; margin-right: 6px; font-size: 12px; }
         input[type="file"]::file-selector-button:hover { background: #2563eb; }
         input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        button { padding: 10px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+        button { padding: 7px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
         .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; width: 100%; }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(59,130,246,0.3); }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(59,130,246,0.3); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-secondary { background: #334155; color: #e2e8f0; width: 100%; }
         .btn-secondary:hover { background: #475569; }
-        .btn-danger { background: #ef4444; color: white; padding: 6px 12px; font-size: 12px; width: auto; }
+        .btn-danger { background: #ef4444; color: white; padding: 4px 10px; font-size: 11px; width: auto; }
         .btn-danger:hover { background: #dc2626; }
 
-        .config-box { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-        .config-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #60a5fa; margin-bottom: 12px; }
-        .config-hint { font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.5; }
+        .config-box { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 10px; margin-bottom: 10px; flex-shrink: 0; }
+        .config-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #60a5fa; margin-bottom: 8px; }
+        .config-hint { font-size: 10px; color: #64748b; margin-top: 6px; line-height: 1.4; }
         .config-hint a { color: #60a5fa; text-decoration: none; }
-        .config-saved { font-size: 11px; color: #4ade80; margin-top: 8px; display: none; }
+        .config-saved { font-size: 11px; color: #4ade80; margin-top: 4px; display: none; }
         .config-saved.show { display: block; }
 
-        .progress-container { margin-bottom: 16px; display: none; }
+        .progress-container { margin-bottom: 6px; display: none; }
         .progress-container.active { display: block; }
-        .progress-bar { width: 100%; height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+        .progress-bar { width: 100%; height: 4px; background: #334155; border-radius: 3px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); width: 0%; transition: width 0.3s ease; }
-        .progress-text { font-size: 12px; color: #64748b; margin-top: 4px; }
-        .file-name { font-size: 12px; color: #64748b; margin-top: 6px; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 4px; }
+        .progress-text { font-size: 11px; color: #64748b; margin-top: 3px; }
+        .file-name { font-size: 11px; color: #64748b; margin-top: 4px; padding: 4px 8px; background: rgba(255,255,255,0.03); border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .status-msg { font-size: 12px; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; display: none; }
+        .status-msg { font-size: 11px; padding: 5px 10px; border-radius: 6px; margin-bottom: 6px; display: none; flex-shrink: 0; }
         .status-msg.show { display: block; }
         .s-ok { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
         .s-err { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
         .s-warn { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
 
-        .queue-list { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
-        .empty-queue { text-align: center; padding: 24px; color: #475569; font-size: 13px; }
-        .queue-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid #334155; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .queue-list { display: flex; flex-direction: column; gap: 5px; flex: 1; overflow-y: auto; min-height: 0; }
+        .empty-queue { text-align: center; padding: 16px; color: #475569; font-size: 12px; }
+        .queue-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: rgba(255,255,255,0.04); border: 1px solid #334155; border-radius: 6px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .queue-item:hover { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.3); }
         .queue-item.active { background: rgba(59,130,246,0.12); border-color: #3b82f6; }
-        .queue-item-name { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 2px; }
-        .queue-item-type { font-size: 11px; color: #64748b; }
+        .queue-item-name { font-size: 12px; font-weight: 600; color: #e2e8f0; margin-bottom: 1px; }
+        .queue-item-type { font-size: 10px; color: #64748b; }
 
         .display-area { background: #000; position: relative; display: flex; flex-direction: column; overflow: hidden; }
         .display-hud { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%); }
@@ -98,10 +98,6 @@
                 <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
             </div>
             <button class="btn-secondary" onclick="saveConfig()" style="width:100%;margin-top:4px;">💾 Salvar</button>
-            <div class="config-hint">
-                Token em: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens.<br>
-                Permissão necessária: <strong>Contents (read & write)</strong>.
-            </div>
             <div class="config-saved" id="configSaved">✅ Salvo!</div>
         </div>
 
@@ -127,7 +123,7 @@
         </div>
 
         <!-- FILA -->
-        <div class="section" style="flex:1;display:flex;flex-direction:column;">
+        <div class="section" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
             <span class="section-title">Fila (<span id="queueCount">0</span>)</span>
             <div class="queue-list" id="queueList">
                 <div class="empty-queue">Nenhuma mídia na fila</div>
@@ -135,10 +131,12 @@
         </div>
 
         <!-- CONTROLES -->
-        <div class="section">
-            <button class="btn-secondary" onclick="loadFromGitHub()" style="margin-bottom:8px;">🔄 Sincronizar do GitHub</button>
-            <button class="btn-secondary" onclick="clearLocal()" style="margin-bottom:8px;">🗑️ Limpar Fila</button>
-            <button class="btn-secondary" onclick="toggleFullscreen()">🖥️ Tela Cheia</button>
+        <div class="section" style="flex-shrink:0;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
+                <button class="btn-secondary" onclick="loadFromGitHub()" style="font-size:10px;padding:6px 4px;">🔄 Sincronizar</button>
+                <button class="btn-secondary" onclick="clearLocal()" style="font-size:10px;padding:6px 4px;">🗑️ Limpar</button>
+                <button class="btn-secondary" onclick="toggleFullscreen()" style="font-size:10px;padding:6px 4px;">🖥️ Full</button>
+            </div>
         </div>
     </div>
 
