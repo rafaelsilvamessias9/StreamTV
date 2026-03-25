@@ -9,7 +9,9 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #ffffff; }
         .container { display: grid; grid-template-columns: 1fr 2fr; height: 100vh; gap: 0; }
 
-        .control-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-right: 2px solid #334155; padding: 12px; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        .control-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-right: 2px solid #334155; padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        .panel-scrollable { padding: 12px; flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; }
+        .panel-footer { padding: 10px 12px; background: #0a1628; border-top: 2px solid #334155; flex-shrink: 0; }
         .panel-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #334155; flex-shrink: 0; }
         .panel-header h1 { font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .section { margin-bottom: 10px; flex-shrink: 0; }
@@ -73,10 +75,10 @@
         .display-nav { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px 20px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%); }
         .nav-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 20px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.2s; width: auto; }
         .nav-btn:hover { background: rgba(59,130,246,0.3); border-color: #3b82f6; }
-        .btn-loop { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 6px 4px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; }
+        .btn-loop { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 4px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; line-height: 1.3; min-height: 44px; }
         .btn-loop:hover { background: #334155; color: #e2e8f0; border-color: #475569; }
-        .btn-loop.active { background: rgba(59,130,246,0.15); border-color: #3b82f6; color: #60a5fa; }
-        .btn-loop-active { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3); color: #4ade80; padding: 6px 4px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; }
+        .btn-loop.active { background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #60a5fa; box-shadow: 0 0 0 1px #3b82f6 inset; }
+        .btn-loop-active { background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.4); color: #4ade80; padding: 8px 4px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; line-height: 1.3; min-height: 44px; }
         .btn-loop-active.off { background: #1e293b; border-color: #334155; color: #64748b; }
         .loop-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; font-weight: 700; }
         .loop-badge.playlist { background: rgba(59,130,246,0.2); color: #60a5fa; }
@@ -88,6 +90,7 @@
 <div class="container">
 
     <div class="control-panel">
+        <div class="panel-scrollable">
         <div class="panel-header"><h1>📺 StreamTV</h1></div>
 
         <!-- CONFIGURAÇÃO GITHUB -->
@@ -137,24 +140,23 @@
                 <div class="empty-queue">Nenhuma mídia na fila</div>
             </div>
         </div>
+        </div><!-- end panel-scrollable -->
 
-        <!-- CONTROLES DE LOOP -->
-        <div class="section" style="flex-shrink:0;">
-            <span class="section-title">Modo de Reprodução</span>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;">
-                <button class="btn-loop" id="btnLoopPlaylist" onclick="setLoopMode('playlist')" title="Avançar automaticamente para o próximo vídeo em loop">🔁 Loop Playlist</button>
-                <button class="btn-loop" id="btnLoopSingle" onclick="setLoopMode('single')" title="Repetir o mesmo vídeo infinitamente">🔂 Loop Único</button>
+        <!-- RODAPÉ FIXO: LOOP + CONTROLES -->
+        <div class="panel-footer">
+            <!-- CONTROLES DE LOOP -->
+            <div style="margin-bottom:8px;">
+                <span class="section-title" style="margin-bottom:6px;">🎬 Modo de Reprodução</span>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;">
+                    <button class="btn-loop" id="btnLoopPlaylist" onclick="setLoopMode('playlist')" title="Loop pela playlist">🔁<br><span style="font-size:9px;">Playlist</span></button>
+                    <button class="btn-loop" id="btnLoopSingle" onclick="setLoopMode('single')" title="Repetir vídeo único">🔂<br><span style="font-size:9px;">Único</span></button>
+                    <button class="btn-loop" id="btnLoopOff" onclick="setLoopMode('off')" title="Sem loop">⏹️<br><span style="font-size:9px;">Sem Loop</span></button>
+                    <button class="btn-loop-active" id="btnAutoplay" onclick="toggleAutoplay()" title="Auto avanço">▶️<br><span style="font-size:9px;" id="autoplayLabel">Auto: ON</span></button>
+                </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;">
-                <button class="btn-loop" id="btnLoopOff" onclick="setLoopMode('off')" title="Sem loop, parar ao terminar">⏹️ Sem Loop</button>
-                <button class="btn-loop-active" id="btnAutoplay" onclick="toggleAutoplay()" title="Liga/desliga avanço automático">▶️ Auto: ON</button>
-            </div>
-        </div>
-
-        <!-- CONTROLES -->
-        <div class="section" style="flex-shrink:0;">
+            <!-- CONTROLES GERAIS -->
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
-                <button class="btn-secondary" onclick="loadFromGitHub()" style="font-size:10px;padding:6px 4px;">🔄 Sincronizar</button>
+                <button class="btn-secondary" onclick="loadFromGitHub()" style="font-size:10px;padding:6px 4px;">🔄 Sync</button>
                 <button class="btn-secondary" onclick="clearLocal()" style="font-size:10px;padding:6px 4px;">🗑️ Limpar</button>
                 <button class="btn-secondary" onclick="toggleFullscreen()" style="font-size:10px;padding:6px 4px;">🖥️ Full</button>
             </div>
@@ -207,7 +209,7 @@ function setLoopMode(mode) {
 function toggleAutoplay() {
     autoplay = !autoplay;
     const btn = document.getElementById('btnAutoplay');
-    btn.textContent = autoplay ? '▶️ Auto: ON' : '⏸️ Auto: OFF';
+    document.getElementById('autoplayLabel').textContent = autoplay ? 'Auto: ON' : 'Auto: OFF';
     btn.className = autoplay ? 'btn-loop-active' : 'btn-loop-active off';
 }
 
