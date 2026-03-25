@@ -73,7 +73,15 @@
         .display-nav { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px 20px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%); }
         .nav-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 20px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.2s; width: auto; }
         .nav-btn:hover { background: rgba(59,130,246,0.3); border-color: #3b82f6; }
-        .nav-counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+        .btn-loop { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 6px 4px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; }
+        .btn-loop:hover { background: #334155; color: #e2e8f0; border-color: #475569; }
+        .btn-loop.active { background: rgba(59,130,246,0.15); border-color: #3b82f6; color: #60a5fa; }
+        .btn-loop-active { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3); color: #4ade80; padding: 6px 4px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; }
+        .btn-loop-active.off { background: #1e293b; border-color: #334155; color: #64748b; }
+        .loop-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; font-weight: 700; }
+        .loop-badge.playlist { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .loop-badge.single { background: rgba(139,92,246,0.2); color: #a78bfa; }
+
     </style>
 </head>
 <body>
@@ -130,6 +138,19 @@
             </div>
         </div>
 
+        <!-- CONTROLES DE LOOP -->
+        <div class="section" style="flex-shrink:0;">
+            <span class="section-title">Modo de Reprodução</span>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;">
+                <button class="btn-loop" id="btnLoopPlaylist" onclick="setLoopMode('playlist')" title="Avançar automaticamente para o próximo vídeo em loop">🔁 Loop Playlist</button>
+                <button class="btn-loop" id="btnLoopSingle" onclick="setLoopMode('single')" title="Repetir o mesmo vídeo infinitamente">🔂 Loop Único</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;">
+                <button class="btn-loop" id="btnLoopOff" onclick="setLoopMode('off')" title="Sem loop, parar ao terminar">⏹️ Sem Loop</button>
+                <button class="btn-loop-active" id="btnAutoplay" onclick="toggleAutoplay()" title="Liga/desliga avanço automático">▶️ Auto: ON</button>
+            </div>
+        </div>
+
         <!-- CONTROLES -->
         <div class="section" style="flex-shrink:0;">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
@@ -171,6 +192,24 @@ const FOLDER = 'midia'; // pasta no repositório
 let queue = [];
 let currentIndex = 0;
 let isUploading = false;
+let loopMode = 'playlist'; // 'playlist' | 'single' | 'off'
+let autoplay = true;
+
+function setLoopMode(mode) {
+    loopMode = mode;
+    document.getElementById('btnLoopPlaylist').classList.toggle('active', mode === 'playlist');
+    document.getElementById('btnLoopSingle').classList.toggle('active', mode === 'single');
+    document.getElementById('btnLoopOff').classList.toggle('active', mode === 'off');
+    // Re-render display to apply new loop setting to current video
+    updateDisplay();
+}
+
+function toggleAutoplay() {
+    autoplay = !autoplay;
+    const btn = document.getElementById('btnAutoplay');
+    btn.textContent = autoplay ? '▶️ Auto: ON' : '⏸️ Auto: OFF';
+    btn.className = autoplay ? 'btn-loop-active' : 'btn-loop-active off';
+}
 
 // ── CONFIG ──
 function saveConfig() {
@@ -415,13 +454,43 @@ function updateDisplay() {
         return;
     }
     const item = queue[currentIndex];
+
+    // Build loop badge
+    let loopBadge = '';
+    if (loopMode === 'playlist') loopBadge = '<span class="loop-badge playlist">🔁 Playlist</span>';
+    else if (loopMode === 'single') loopBadge = '<span class="loop-badge single">🔂 Único</span>';
+
     document.getElementById('hudTitle').textContent = item.name;
-    document.getElementById('hudPosition').textContent = `${currentIndex+1} de ${queue.length}`;
+    document.getElementById('hudPosition').innerHTML = `${currentIndex+1} de ${queue.length}${loopBadge}`;
     document.getElementById('hudStatus').textContent = item.type==='image'?'🖼️ Imagem':item.type==='video'?'🎬 Vídeo':'📄 Documento';
     document.getElementById('navCounter').textContent = `${currentIndex+1} / ${queue.length}`;
-    if (item.type === 'image')      c.innerHTML = `<img src="${item.url}" alt="${item.name}">`;
-    else if (item.type === 'video') c.innerHTML = `<video controls autoplay><source src="${item.url}">Vídeo não suportado</video>`;
-    else                            c.innerHTML = `<iframe src="${item.url}"></iframe>`;
+
+    if (item.type === 'image') {
+        c.innerHTML = `<img src="${item.url}" alt="${item.name}">`;
+        // Auto-advance images after 10s if autoplay is on
+        if (autoplay && (loopMode === 'playlist' || loopMode === 'single')) {
+            clearTimeout(window._imgTimer);
+            window._imgTimer = setTimeout(() => {
+                if (loopMode === 'single') {
+                    updateDisplay(); // re-trigger same
+                } else {
+                    navigate(1);
+                }
+            }, 10000);
+        }
+    } else if (item.type === 'video') {
+        const loopAttr = loopMode === 'single' ? 'loop' : '';
+        c.innerHTML = `<video id="mainVideo" controls autoplay ${loopAttr} style="max-width:100%;max-height:100%;"><source src="${item.url}">Vídeo não suportado</video>`;
+        const vid = document.getElementById('mainVideo');
+        if (vid && loopMode !== 'single' && autoplay) {
+            vid.addEventListener('ended', () => {
+                if (loopMode === 'playlist') navigate(1);
+                // loopMode 'off' = just stops
+            });
+        }
+    } else {
+        c.innerHTML = `<iframe src="${item.url}"></iframe>`;
+    }
 }
 
 // ── TECLADO + FULLSCREEN ──
@@ -439,6 +508,7 @@ function toggleFullscreen() {
 // ── INIT ──
 loadConfig();
 loadFromGitHub();
+setLoopMode('playlist'); // default: loop playlist
 </script>
 </body>
 </html>
