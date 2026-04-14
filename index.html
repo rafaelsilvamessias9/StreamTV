@@ -213,26 +213,36 @@ function toggleAutoplay() {
     btn.className = autoplay ? 'btn-loop-active' : 'btn-loop-active off';
 }
 
-// ── CONFIG (credenciais fixas — não dependem de localStorage) ──
-const _CFG = {
-    user:  'rafaelsilvamessias9',
-    repo:  'StreamTV',
-    token: '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'
-};
-
-function saveConfig() {
-    showStatus('✅ Credenciais já estão fixas no arquivo!', 'ok');
+// ── CONFIG — salva apenas no dispositivo (IndexedDB + localStorage) ──
+async function saveConfig() {
+    const cfg = { user: v('ghUser'), repo: v('ghRepo'), token: v('ghToken') };
+    if (!cfg.user || !cfg.repo || !cfg.token) {
+        showStatus('⚠️ Preencha usuário, repositório e token', 'warn'); return;
+    }
+    const data = JSON.stringify(cfg);
+    await idbSet('stv_config', data);
+    try { localStorage.setItem('stv_config', data); } catch(e) {}
+    document.getElementById('configSaved').classList.add('show');
+    setTimeout(() => document.getElementById('configSaved').classList.remove('show'), 3000);
     loadFromGitHub();
 }
 
 function getConfig() {
-    return { user: _CFG.user, repo: _CFG.repo, token: _CFG.token };
+    return { user: v('ghUser'), repo: v('ghRepo'), token: v('ghToken') };
 }
 
-function loadConfig() {
-    set('ghUser',  _CFG.user);
-    set('ghRepo',  _CFG.repo);
-    set('ghToken', '(salvo no arquivo)');
+async function loadConfig() {
+    let raw = null;
+    try { raw = await idbGet('stv_config'); } catch(e) {}
+    if (!raw) { try { raw = localStorage.getItem('stv_config'); } catch(e) {} }
+    if (raw) {
+        try {
+            const cfg = JSON.parse(raw);
+            set('ghUser',  cfg.user  || '');
+            set('ghRepo',  cfg.repo  || '');
+            set('ghToken', cfg.token || '');
+        } catch(e) {}
+    }
 }
 
 // ── HELPERS ──
@@ -351,7 +361,7 @@ async function uploadMedia() {
 // ── CARREGAR DO GITHUB ──
 async function loadFromGitHub() {
     const cfg = getConfig();
-    if (!cfg.user || !cfg.repo || !cfg.token) { loadLocal(); return; }
+    if (!cfg.user || !cfg.repo || !cfg.token) { await loadLocal(); return; }
 
     showStatus('🔄 Carregando do GitHub...', 'warn');
     try {
@@ -381,7 +391,7 @@ async function loadFromGitHub() {
         showStatus(`✅ ${queue.length} arquivo(s) carregado(s)`, 'ok');
     } catch (err) {
         showStatus('⚠️ Erro ao carregar — usando cache local', 'warn');
-        loadLocal();
+        await loadLocal();
     }
 }
 
@@ -407,19 +417,91 @@ async function deleteMedia(index) {
     } catch (err) { alert('Erro ao deletar: ' + err.message); }
 }
 
-// ── LOCAL CACHE ──
-function saveLocal() {
-    try { localStorage.setItem('stv_queue', JSON.stringify(queue)); } catch(e) {}
+// ── PERSISTÊNCIA ROBUSTA: IndexedDB + localStorage (Fire TV safe) ──
+const DB_NAME    = 'StreamTV';
+const DB_VERSION = 1;
+const STORE_NAME = 'persist';
+let   _db        = null;
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        if (_db) { resolve(_db); return; }
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = e => {
+            e.target.result.createObjectStore(STORE_NAME);
+        };
+        req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+        req.onerror   = () => reject(req.error);
+    });
 }
-function loadLocal() {
+
+async function idbSet(key, value) {
     try {
-        const raw = localStorage.getItem('stv_queue');
-        if (raw) { queue = JSON.parse(raw); renderQueue(); updateDisplay(); }
-    } catch(e) {}
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx    = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const req   = store.put(value, key);
+            req.onsuccess = () => resolve();
+            req.onerror   = () => reject(req.error);
+        });
+    } catch(e) { /* silently fail */ }
 }
-function clearLocal() {
+
+async function idbGet(key) {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx    = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req   = store.get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror   = () => reject(req.error);
+        });
+    } catch(e) { return null; }
+}
+
+async function idbDelete(key) {
+    try {
+        const db = await openDB();
+        return new Promise((resolve) => {
+            const tx    = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            store.delete(key);
+            tx.oncomplete = () => resolve();
+        });
+    } catch(e) { /* silently fail */ }
+}
+
+// Salva em IndexedDB E localStorage (redundância para Fire TV)
+async function saveLocal() {
+    const data = JSON.stringify(queue);
+    // IndexedDB — primário (persiste mesmo com WebView reiniciado)
+    await idbSet('stv_queue', data);
+    // localStorage — fallback
+    try { localStorage.setItem('stv_queue', data); } catch(e) {}
+}
+
+// Carrega tentando IndexedDB primeiro, depois localStorage
+async function loadLocal() {
+    let raw = null;
+    // 1) tenta IndexedDB
+    try { raw = await idbGet('stv_queue'); } catch(e) {}
+    // 2) fallback para localStorage
+    if (!raw) {
+        try { raw = localStorage.getItem('stv_queue'); } catch(e) {}
+    }
+    if (raw) {
+        try { queue = JSON.parse(raw); renderQueue(); updateDisplay(); } catch(e) {}
+    }
+}
+
+async function clearLocal() {
     if (!confirm('Limpar fila? (arquivos continuam no GitHub)')) return;
-    queue = []; currentIndex = 0; saveLocal(); renderQueue(); updateDisplay();
+    queue = []; currentIndex = 0;
+    await idbDelete('stv_queue');
+    try { localStorage.removeItem('stv_queue'); } catch(e) {}
+    renderQueue(); updateDisplay();
 }
 
 // ── RENDER ──
@@ -509,9 +591,11 @@ function toggleFullscreen() {
 }
 
 // ── INIT ──
-loadConfig();
-loadFromGitHub();
 setLoopMode('playlist'); // default: loop playlist
+(async () => {
+    await loadConfig();
+    loadFromGitHub();
+})();
 </script>
 </body>
 </html>
