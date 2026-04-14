@@ -213,25 +213,26 @@ function toggleAutoplay() {
     btn.className = autoplay ? 'btn-loop-active' : 'btn-loop-active off';
 }
 
-// ── CONFIG ──
+// ── CONFIG (credenciais fixas — não dependem de localStorage) ──
+const _CFG = {
+    user:  'rafaelsilvamessias9',
+    repo:  'StreamTV',
+    token: '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'
+};
+
 function saveConfig() {
-    const u = v('ghUser'), r = v('ghRepo'), t = v('ghToken');
-    if (!u || !r || !t) { showStatus('Preencha todos os campos', 'err'); return; }
-    ls('gh_user', u); ls('gh_repo', r); ls('gh_token', t);
-    document.getElementById('configSaved').classList.add('show');
-    setTimeout(() => document.getElementById('configSaved').classList.remove('show'), 2500);
+    showStatus('✅ Credenciais já estão fixas no arquivo!', 'ok');
     loadFromGitHub();
 }
 
 function getConfig() {
-    return { user: lg('gh_user'), repo: lg('gh_repo'), token: lg('gh_token') };
+    return { user: _CFG.user, repo: _CFG.repo, token: _CFG.token };
 }
 
 function loadConfig() {
-    const c = getConfig();
-    if (c.user)  set('ghUser', c.user);
-    if (c.repo)  set('ghRepo', c.repo);
-    if (c.token) set('ghToken', c.token);
+    set('ghUser',  _CFG.user);
+    set('ghRepo',  _CFG.repo);
+    set('ghToken', '(salvo no arquivo)');
 }
 
 // ── HELPERS ──
